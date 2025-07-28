@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orçamento de Narração</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-8" x-data="orcamento">
+    <h1 class="text-2xl font-bold mb-6 text-center">Solicitação de Orçamento de Narração</h1>
+
+    <!-- Contratante -->
+    <section class="mb-6">
+      <h2 class="text-lg font-semibold mb-4">1. Dados do Contratante</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input type="text" placeholder="Nome" class="input" x-model="form.nome">
+        <input type="text" placeholder="Empresa (opcional)" class="input" x-model="form.empresa">
+        <input type="email" placeholder="E-mail" class="input" x-model="form.email">
+        <input type="text" placeholder="WhatsApp" class="input" x-model="form.whatsapp">
+      </div>
+    </section>
+
+    <!-- Locução -->
+    <section class="mb-6">
+      <h2 class="text-lg font-semibold mb-4">2. Dados da Locução</h2>
+      <div class="space-y-4">
+        <select class="input" x-model="form.tipo">
+          <option value="">Tipo de peça</option>
+          <option value="Peça comercial">Peça comercial</option>
+          <option value="Propaganda eleitoral">Propaganda eleitoral</option>
+          <option value="Aviso">Aviso</option>
+          <option value="Nota de falecimento">Nota de falecimento</option>
+          <option value="Outros">Outros</option>
+        </select>
+
+        <select class="input" x-model="form.tom">
+          <option value="">Tom desejado</option>
+          <option value="Natural">Natural</option>
+          <option value="Alegre">Alegre</option>
+          <option value="Sério">Sério</option>
+        </select>
+
+        <select class="input" x-model="form.velocidade">
+          <option value="">Velocidade da fala</option>
+          <option value="Lenta">Lenta</option>
+          <option value="Normal">Normal</option>
+          <option value="Rápida">Rápida</option>
+        </select>
+
+        <label class="flex items-center gap-2">
+          <input type="checkbox" x-model="form.enviarDepois" class="accent-indigo-600">
+          <span>Enviar texto posteriormente</span>
+        </label>
+
+        <template x-if="!form.enviarDepois">
+          <textarea rows="4" placeholder="Texto da locução" class="input" x-model="form.texto"></textarea>
+        </template>
+
+        <template x-if="form.enviarDepois">
+          <select class="input" x-model="form.estimativaPalavras">
+            <option value="">Estimativa de palavras</option>
+            <option value="até 30">Até 30</option>
+            <option value="de 30 a 50">De 30 a 50</option>
+            <option value="de 50 a 100">De 50 a 100</option>
+            <option value="mais de 100">Mais de 100</option>
+          </select>
+        </template>
+      </div>
+    </section>
+
+    <!-- Informações adicionais -->
+    <section class="mb-6">
+      <h2 class="text-lg font-semibold mb-4">3. Informações Adicionais</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <select class="input" x-model="form.trilha">
+          <option value="">Trilha sonora?</option>
+          <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
+        </select>
+        <select class="input" x-model="form.exclusividade">
+          <option value="">Exclusividade de voz?</option>
+          <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Estimativa -->
+    <section class="mb-6">
+      <h2 class="text-lg font-semibold mb-4">4. Estimativa de Valor</h2>
+      <div class="bg-gray-100 p-4 rounded-xl text-lg font-medium">
+        Estimativa: <span x-text="`R$ ${valorEstimado}`"></span>
+      </div>
+    </section>
+
+    <!-- Botão -->
+    <div class="text-center">
+      <button @click="enviarWhatsApp" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl transition">
+        Confirmar orçamento via WhatsApp
+      </button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('orcamento', () => ({
+        form: {
+          nome: '',
+          empresa: '',
+          email: '',
+          whatsapp: '',
+          tipo: '',
+          tom: '',
+          velocidade: '',
+          texto: '',
+          enviarDepois: false,
+          estimativaPalavras: '',
+          trilha: '',
+          exclusividade: ''
+        },
+        get valorEstimado() {
+          let valor = 100
+          if (this.form.tipo === 'Propaganda eleitoral') valor += 50
+          if (this.form.trilha === 'Sim') valor += 30
+          if (this.form.exclusividade === 'Sim') valor += 40
+
+          if (this.form.enviarDepois) {
+            if (this.form.estimativaPalavras === 'de 50 a 100') valor += 20
+            else if (this.form.estimativaPalavras === 'mais de 100') valor += 40
+          } else {
+            const palavras = this.form.texto.trim().split(/\s+/).length
+            if (palavras > 50 && palavras <= 100) valor += 20
+            else if (palavras > 100) valor += 40
+          }
+
+          return valor
+        },
+        enviarWhatsApp() {
+          const f = this.form
+          const texto = `
+*Solicitação de Orçamento de Narração*
+
+*Dados do contratante*
+- Nome: ${f.nome}
+- Empresa: ${f.empresa || '-'}
+- E-mail: ${f.email}
+- WhatsApp: ${f.whatsapp}
+
+*Dados da locução*
+- Tipo: ${f.tipo}
+- Tom: ${f.tom}
+- Velocidade: ${f.velocidade}
+- Texto: ${f.enviarDepois ? `Estimativa: ${f.estimativaPalavras}` : f.texto}
+
+*Informações adicionais*
+- Trilha sonora: ${f.trilha}
+- Exclusividade: ${f.exclusividade}
+
+> Valor estimado: *R$ ${this.valorEstimado}*
+
+_Enviado via formulário_
+          `.trim()
+
+          const numero = '5500000000000' // Substitua pelo número do WhatsApp desejado
+          const url = `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`
+          window.open(url, '_blank')
+        }
+      }))
+    })
+  </script>
+
+  <style>
+    .input {
+      @apply w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white;
+    }
+  </style>
+</body>
+</html>
